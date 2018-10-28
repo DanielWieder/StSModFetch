@@ -1,13 +1,9 @@
 # Download the latest slay the spire mods from Github
-#
-# Github has a limit of 60 downloads per hour per IP for unauthenticated requests. 
-# This isn't a problem right now since it has just over 30 downloads
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # The path of the STS mods folder. This uses the steam path by default.
-$steamPath = "C:\Program Files (x86)\Steam\steamapps\common"
-$stsPath = "$steamPath\SlayTheSpire"
+$stsPath = "C:\Program Files (x86)\Steam\steamapps\common\SlayTheSpire"
 $modPath = "$stsPath\mods\"
 $dataPath = "$modPath\sts-mod-data.txt"
 
@@ -34,13 +30,19 @@ $data =
 			('GraysonnG/InfiniteSpire', 			'InfiniteSpire.jar', 		''),
 			('twanvl/sts-conspire', 				'Conspire.jar', 			''),
 			('GraysonnG/MimicMod', 					'MimicMod.jar', 			'') | ForEach-Object {[pscustomobject]@{repo = $_[0]; file = $_[1]; version = $_[2]}}
-			
+		
+# Load saved metadata		
 if ([System.IO.File]::Exists($dataPath)) {
 	$storedData = Get-Content -Path $dataPath | ConvertFrom-Json	
 
 	if ($data[0].version -eq $storedData[0].version) {
 		$data = $storedData;
 	}
+}
+
+# Add the mods directory if it doesn't exist
+if (-NOT ([System.IO.File]::Exists($modPath))) {
+	New-Item -ItemType Directory -path $modPath
 }
 
 function download($mod, $path) {
@@ -65,12 +67,12 @@ function download($mod, $path) {
 	}
 }
 
+# Download all of the mods
 download $data[1] $stsPath
 
 $mtsFile = $data[1].file;
 Expand-Archive "$stsPath/$mtsFile" -DestinationPath $stsPath -Force
 
-# Download all of the mods
 for ($i = 2; $i -lt $data.Length; $i++){
 	download $data[$i] $modPath
 }
